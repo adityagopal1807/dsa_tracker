@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DSA Tracker</title>
+
+<style>
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  color: white;
+  margin: 0;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+  color: #f472b6;
+}
+
+.subtitle {
+  text-align: center;
+  color: #94a3b8;
+  margin-bottom: 20px;
+}
+
+.top {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.progress-bar {
+  height: 20px;
+  background: #334155;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress {
+  height: 100%;
+  background: #22c55e;
+  width: 0%;
+  transition: 0.3s;
+}
+
+.section-title {
+  margin-top: 30px;
+  color: #facc15;
+}
+
+.card {
+  background: #1e293b;
+  padding: 15px;
+  margin: 12px 0;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+  transition: 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(244,114,182,0.3);
+}
+
+a {
+  color: #38bdf8;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.badge {
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+.easy { background: #22c55e; }
+.medium { background: #eab308; }
+.hard { background: #ef4444; }
+.revise { background: #f472b6; }
+
+.checkboxes {
+  margin-top: 10px;
+}
+
+label {
+  margin-right: 15px;
+  cursor: pointer;
+}
+
+input[type="checkbox"] {
+  transform: scale(1.2);
+  margin-right: 5px;
+}
+
+textarea {
+  width: 100%;
+  margin-top: 10px;
+  border-radius: 8px;
+  padding: 8px;
+  border: none;
+  resize: vertical;
+  min-height: 60px;
+  background: #0f172a;
+  color: white;
+}
+
+.small {
+  font-size: 12px;
+  color: #94a3b8;
+}
+</style>
+</head>
+
+<body>
+
+<h1>💖 My DSA Tracker</h1>
+<div class="subtitle">Stay consistent. Small wins daily.</div>
+
+<div class="top">
+  Opened: <span id="count"></span> times
+  <div class="progress-bar">
+    <div class="progress" id="progress"></div>
+  </div>
+  <div id="percent"></div>
+</div>
+
+<h2 class="section-title">📚 All Questions</h2>
+<div id="questions"></div>
+
+<script>
+const questions = [
+  {name:"Running Sum", link:"https://leetcode.com/problems/running-sum-of-1d-array/", diff:"easy"},
+  {name:"Range Sum Query", link:"https://leetcode.com/problems/range-sum-query-immutable/", diff:"easy"},
+  {name:"Pivot Index", link:"https://leetcode.com/problems/find-pivot-index/", diff:"easy"},
+  {name:"Two Sum II", link:"https://leetcode.com/problems/two-sum-ii-input-array-is-sorted/", diff:"medium"},
+  {name:"Majority Element", link:"https://leetcode.com/problems/majority-element/", diff:"easy"},
+  {name:"Counting Bits", link:"https://leetcode.com/problems/counting-bits/", diff:"easy"},
+  {name:"Power of Two", link:"https://leetcode.com/problems/power-of-two/", diff:"easy"},
+  {name:"Trapping Rain Water", link:"https://leetcode.com/problems/trapping-rain-water/", diff:"hard"},
+  {name:"Longest Palindrome", link:"https://leetcode.com/problems/longest-palindromic-substring/", diff:"medium"},
+  {name:"Longest Common Prefix", link:"https://leetcode.com/problems/longest-common-prefix/", diff:"easy"},
+  {name:"Merge Two Lists", link:"https://leetcode.com/problems/merge-two-sorted-lists/", diff:"easy"},
+  {name:"Intersection Linked List", link:"https://leetcode.com/problems/intersection-of-two-linked-lists/", diff:"easy"},
+  {name:"Two Stacks", link:"https://www.geeksforgeeks.org/problems/implement-two-stacks-in-an-array/1", diff:"medium"},
+  {name:"Next Greater Element", link:"https://www.geeksforgeeks.org/problems/next-larger-element-1587115620/1", diff:"medium"},
+  {name:"Histogram", link:"https://leetcode.com/problems/largest-rectangle-in-histogram/", diff:"hard"},
+  {name:"Sliding Window Max", link:"https://leetcode.com/problems/sliding-window-maximum/", diff:"hard"},
+  {name:"Subsets", link:"https://leetcode.com/problems/subsets/", diff:"medium"},
+  {name:"Combination Sum", link:"https://leetcode.com/problems/combination-sum/", diff:"medium"},
+  {name:"Most Frequent", link:"https://www.geeksforgeeks.org/problems/most-frequent-element-in-an-array/1", diff:"easy"},
+  {name:"Median of Two Arrays", link:"https://leetcode.com/problems/median-of-two-sorted-arrays/", diff:"hard"}
+];
+
+// open count
+let count = localStorage.getItem("openCount") || 0;
+count++;
+localStorage.setItem("openCount", count);
+document.getElementById("count").innerText = count;
+
+function getData(i){
+  return JSON.parse(localStorage.getItem("q"+i)) || {};
+}
+
+function save(i, key, value){
+  let data = getData(i);
+  data[key] = value;
+  localStorage.setItem("q"+i, JSON.stringify(data));
+  render();
+}
+
+function saveNote(i, value){
+  let data = getData(i);
+  data.note = value;
+  localStorage.setItem("q"+i, JSON.stringify(data));
+}
+
+function markOpened(i){
+  let data = getData(i);
+  data.last = new Date().toLocaleString();
+  localStorage.setItem("q"+i, JSON.stringify(data));
+}
+
+function updateProgress(){
+  let solved = 0;
+  questions.forEach((_,i)=>{
+    if(getData(i).solved) solved++;
+  });
+  let percent = Math.floor((solved/questions.length)*100);
+  document.getElementById("progress").style.width = percent+"%";
+  document.getElementById("percent").innerText = percent+"% Completed";
+}
+
+function createCard(q,i){
+  let data = getData(i);
+
+  return `
+  <div class="card">
+    <div>
+      <a href="${q.link}" target="_blank" onclick="markOpened(${i})">${q.name}</a>
+      <span class="badge ${q.diff}">${q.diff}</span>
+      ${data.revise ? '<span class="badge revise">Revise</span>' : ''}
+    </div>
+
+    <div class="checkboxes">
+      <label><input type="checkbox" ${data.solved?"checked":""}
+      onchange="save(${i},'solved',this.checked)">Solved</label>
+
+      <label><input type="checkbox" ${data.brute?"checked":""}
+      onchange="save(${i},'brute',this.checked)">Brute</label>
+
+      <label><input type="checkbox" ${data.optimal?"checked":""}
+      onchange="save(${i},'optimal',this.checked)">Optimal</label>
+
+      <label><input type="checkbox" ${data.revise?"checked":""}
+      onchange="save(${i},'revise',this.checked)">Revise</label>
+    </div>
+
+    <textarea placeholder="Notes..." 
+    oninput="saveNote(${i},this.value)">${data.note||""}</textarea>
+
+    ${data.last ? `<div class="small">Last opened: ${data.last}</div>` : ""}
+  </div>
+  `;
+}
+
+function render(){
+  const all = document.getElementById("questions");
+  all.innerHTML = "";
+
+  questions.forEach((q,i)=>{
+    all.innerHTML += createCard(q,i);
+  });
+
+  updateProgress();
+}
+
+render();
+</script>
+
+</body>
+</html>
